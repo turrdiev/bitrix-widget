@@ -1,46 +1,137 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitrix Виджет</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://api.bitrix24.com/api/v1/"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-    .container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
-      margin: 0 auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      color: #333;
-    }
-    button {
-      background: #28a745;
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #218838;
-    }
+    body{font-family:Arial, Helvetica, sans-serif; padding:10px;}
+    select,button{width:100%;padding:8px;margin-top:8px;}
+    .info{font-size:12px;color:#555;margin-top:6px;}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Виджет Bitrix</h1>
-    <p>Это тестовый HTML-файл, размещённый на GitHub Pages.</p>
-    <button onclick="alert('Кнопка работает!')">Нажми меня</button>
-  </div>
+  <h3>Шаблоны по департаменту</h3>
+  <div id="widget">Загрузка...</div>
+
+<script>
+BX24.init(function() {
+  // ЗАМЕНИТЕ ПЛЕЙСХОЛДЕРЫ
+  const MAIN_ENTITY_TYPE_ID = 150; // ID смарт-процесса «Заявки»
+  const TEMPLATES_ENTITY_TYPE_ID = 160; // ID смарт-процесса «Шаблоны»
+  const FIELD_DEPARTMENT_CODE = 'UF_CRM_6_1758872949'; // департамент в заявке
+  const FIELD_TEMPLATE_CODE   = 'UF_CRM_6_1695818072'; // выбранный шаблон
+  const FIELD_TEMPLATE_NAME   = 'UF_CRM_TEMPLATE_NAME'; // название шаблона в «Шаблоны»
+
+  const placement = BX24.placementInfo();
+  const itemId = placement.options?.ID;
+  if(!itemId){
+    document.getElementById('widget').innerText = 'Нет ID карточки';
+    console.error('placement.options', placement.options);
+    return;
+  }
+
+  let currentDepartment = null;
+  let currentTemplate = null;
+
+  loadItem(itemId);
+
+  // каждые 3 сек проверяем департамент
+  setInterval(()=> {
+    BX24.callMethod('crm.item.get', {entityTypeId: MAIN_ENTITY_TYPE_ID, id: itemId}, function(res){
+      if(res.error()) return console.warn(res.error());
+      const dep = res.data.item[FIELD_DEPARTMENT_CODE];
+      if(dep !== currentDepartment){
+        currentDepartment = dep;
+        loadTemplates(dep, itemId);
+      }
+    });
+  }, 3000);
+
+  function loadItem(id){
+    BX24.callMethod('crm.item.get', {entityTypeId: MAIN_ENTITY_TYPE_ID, id: id}, function(res){
+      if(res.error()){
+        document.getElementById('widget').innerText = 'Ошибка загрузки';
+        console.error(res);
+        return;
+      }
+      const item = res.data.item;
+      console.log('ITEM', item); // смотри реальные ключи
+      currentDepartment = item[FIELD_DEPARTMENT_CODE];
+      currentTemplate = item[FIELD_TEMPLATE_CODE];
+      loadTemplates(currentDepartment, id);
+    });
+  }
+
+  function loadTemplates(department, itemId){
+    const container = document.getElementById('widget');
+    container.innerHTML = 'Загрузка шаблонов...';
+    if(!department){
+      container.innerHTML = 'Выберите департамент в карточке';
+      return;
+    }
+
+    BX24.callMethod('crm.item.list', {
+      entityTypeId: TEMPLATES_ENTITY_TYPE_ID,
+      filter: {[FIELD_DEPARTMENT_CODE]: department},
+      select: ['ID', FIELD_TEMPLATE_NAME]
+    }, function(res){
+      if(res.error()){
+        container.innerHTML = 'Ошибка при загрузке шаблонов';
+        console.error(res);
+        return;
+      }
+      const items = res.data.items || [];
+      const names = items.map(i => {
+        return i[FIELD_TEMPLATE_NAME] || i.NAME || ('Шаблон '+i.ID);
+      });
+      drawSelect(names, itemId);
+    });
+  }
+
+  function drawSelect(list, itemId){
+    const container = document.getElementById('widget');
+    container.innerHTML = '';
+    if(list.length === 0){
+      container.innerText = 'Нет шаблонов для этого департамента';
+      return;
+    }
+
+    const select = document.createElement('select');
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.innerText = '— выбрать шаблон —';
+    select.appendChild(emptyOpt);
+
+    list.forEach(name=>{
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.innerText = name;
+      if(currentTemplate === name) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', function(){
+      const val = this.value;
+      BX24.callMethod('crm.item.update', {
+        entityTypeId: MAIN_ENTITY_TYPE_ID,
+        id: itemId,
+        fields: {[FIELD_TEMPLATE_CODE]: val}
+      }, function(uRes){
+        if(uRes.error()){
+          alert('Ошибка сохранения');
+          console.error(uRes);
+        } else {
+          currentTemplate = val;
+          const s=document.createElement('div');s.className='info';s.innerText='Сохранено';container.appendChild(s);
+        }
+      });
+    });
+
+    container.appendChild(select);
+  }
+
+});
+</script>
 </body>
 </html>
