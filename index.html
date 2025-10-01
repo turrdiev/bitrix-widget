@@ -2,65 +2,50 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Виджет заявок</title>
-  <script src="https://api.bitrix24.com/api/v1/"></script>
+  <title>Фильтрация заявок</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    select, button { margin: 10px 0; padding: 5px; }
+    ul { margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <label>Департамент:</label>
-  <select id="department"></select>
+  <h3>Выберите департамент</h3>
+  <select id="departmentSelect">
+    <option value="">-- выберите --</option>
+    <option value="IT">IT</option>
+    <option value="HR">HR</option>
+  </select>
 
-  <label>Шаблон:</label>
-  <select id="template"></select>
+  <h3>Заявки</h3>
+  <ul id="requestsList"></ul>
 
   <script>
-    // Подключение к Bitrix REST API
-    BX24.init(function() {
-      // Загружаем список департаментов (из поля UF_CRM_6_1758872949)
-      BX24.callMethod(
-        "crm.item.list",
-        {
-          entityTypeId: 6, // ID твоего смарт-процесса "Заявки"
-          select: ["id", "ufCrm6Department"]
-        },
-        function(result) {
-          if(result.error()) {
-            alert("Ошибка: " + result.error());
-          } else {
-            let departments = [...new Set(result.data().map(r => r.ufCrm6Department))];
-            let depSelect = document.getElementById("department");
-            departments.forEach(dep => {
-              let option = document.createElement("option");
-              option.value = dep;
-              option.textContent = dep;
-              depSelect.appendChild(option);
-            });
-          }
-        }
-      );
+    const requests = {
+      "IT": [
+        { name: "Сброс пароля", template: "Шаблон IT_1" },
+        { name: "Не работает ПК", template: "Шаблон IT_2" }
+      ],
+      "HR": [
+        { name: "Отпуск", template: "Шаблон HR_1" },
+        { name: "Командировка", template: "Шаблон HR_2" }
+      ]
+    };
 
-      // Слушатель изменения департамента
-      document.getElementById("department").addEventListener("change", function() {
-        let dep = this.value;
+    const departmentSelect = document.getElementById("departmentSelect");
+    const requestsList = document.getElementById("requestsList");
 
-        BX24.callMethod(
-          "crm.item.list",
-          {
-            entityTypeId: 7, // ID смарт-процесса "Шаблоны"
-            filter: { "ufCrm7Department": dep },
-            select: ["id", "ufCrm7Name"]
-          },
-          function(result) {
-            let templateSelect = document.getElementById("template");
-            templateSelect.innerHTML = "";
-            result.data().forEach(item => {
-              let option = document.createElement("option");
-              option.value = item.id;
-              option.textContent = item.ufCrm7Name;
-              templateSelect.appendChild(option);
-            });
-          }
-        );
-      });
+    departmentSelect.addEventListener("change", () => {
+      const dep = departmentSelect.value;
+      requestsList.innerHTML = ""; // очищаем список
+
+      if (requests[dep]) {
+        requests[dep].forEach(r => {
+          const li = document.createElement("li");
+          li.textContent = `${r.name} → ${r.template}`;
+          requestsList.appendChild(li);
+        });
+      }
     });
   </script>
 </body>
