@@ -2,51 +2,101 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Фильтрация заявок</title>
+  <title>Фильтрация шаблонов по департаменту</title>
+  <script src="https://api.bitrix24.com/api/v1/"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    select, button { margin: 10px 0; padding: 5px; }
-    ul { margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background: #f5f5f5;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
-  <h3>Выберите департамент</h3>
-  <select id="departmentSelect">
-    <option value="">-- выберите --</option>
-    <option value="IT">IT</option>
-    <option value="HR">HR</option>
+  <h3>Выбор шаблона по департаменту</h3>
+  <label for="templateSelect">Шаблон:</label>
+  <select id="templateSelect">
+    <option value="">-- выберите департамент --</option>
   </select>
 
-  <h3>Заявки</h3>
-  <ul id="requestsList"></ul>
+<script>
+  BX24.init(function() {
+    console.log("Виджет загружен ✅");
 
-  <script>
-    const requests = {
-      "IT": [
-        { name: "Сброс пароля", template: "Шаблон IT_1" },
-        { name: "Не работает ПК", template: "Шаблон IT_2" }
-      ],
-      "HR": [
-        { name: "Отпуск", template: "Шаблон HR_1" },
-        { name: "Командировка", template: "Шаблон HR_2" }
-      ]
-    };
+    let templateSelect = document.getElementById("templateSelect");
 
-    const departmentSelect = document.getElementById("departmentSelect");
-    const requestsList = document.getElementById("requestsList");
+    // 🔹 функция загрузки шаблонов по департаменту
+    function loadTemplatesByDepartment(department) {
+      if (!department) {
+        templateSelect.innerHTML = "<option value=''>-- департамент не выбран --</option>";
+        return;
+      }
 
-    departmentSelect.addEventListener("change", () => {
-      const dep = departmentSelect.value;
-      requestsList.innerHTML = ""; // очищаем список
+      BX24.callMethod(
+        "crm.item.list",
+        {
+          entityTypeId: 34, // смарт-процесс "Шаблоны"
+          filter: { "ufCrm34UfDepartment": department },
+          select: ["id", "ufCrm35UfTemplate"]
+        },
+        function(result) {
+          if (result.error()) {
+            console.error("Ошибка:", result.error());
+            return;
+          }
 
-      if (requests[dep]) {
-        requests[dep].forEach(r => {
-          const li = document.createElement("li");
-          li.textContent = `${r.name} → ${r.template}`;
-          requestsList.appendChild(li);
+          let templates = result.data();
+          templateSelect.innerHTML = "";
+
+          if (templates.length === 0) {
+            templateSelect.innerHTML = "<option value=''>-- нет шаблонов для департамента --</option>";
+            return;
+          }
+
+          templates.forEach(t => {
+            let option = document.createElement("option");
+            option.value = t.ufCrm35UfTemplate;
+            option.textContent = t.ufCrm35UfTemplate;
+            templateSelect.appendChild(option);
+          });
+
+          console.log("Подгруженные шаблоны:", templates);
+        }
+      );
+    }
+
+    // 🔹 обработчик выбора шаблона — сохраняем в поле заявки
+    templateSelect.addEventListener("change", function() {
+      let value = this.value;
+      if (value) {
+        BX24.placement.call("setFieldValue", {
+          field: "UF_CRM_33_UF_TEMPLATE",
+          value: value
         });
+        console.log("Выбран шаблон:", value);
       }
     });
-  </script>
+
+    // 🔹 слушаем изменения карточки (например, департамент)
+    BX24.placement.call("addEventListener", {
+      event: "onCrmEntityUpdate",
+      handler: function(eventData) {
+        let department = eventData.currentValues["UF_CRM_33_UF_DEPARTMENT"];
+        console.log("Выбран департамент:", department);
+        loadTemplatesByDepartment(department);
+      }
+    });
+  });
+</script>
 </body>
 </html>
