@@ -2,114 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Фильтрация шаблонов по департаменту</title>
+  <title>Виджет заявок</title>
   <script src="https://api.bitrix24.com/api/v1/"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      background: #f5f5f5;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    select {
-      width: 100%;
-      padding: 5px;
-      margin-bottom: 15px;
-    }
-  </style>
+  <script src="script.js"></script>
 </head>
 <body>
-  <h3>Выбор шаблона по департаменту</h3>
-  <label for="templateSelect">Шаблон:</label>
-  <select id="templateSelect">
-    <option value="">-- выберите департамент --</option>
-  </select>
+  <label for="department">Департамент:</label>
+  <select id="department"></select>
 
-<script>
-  BX24.init(function() {
-    console.log("Виджет загружен ✅");
+  <br><br>
 
-    let templateSelect = document.getElementById("templateSelect");
-
-    // 🔹 функция загрузки шаблонов по департаменту
-    function loadTemplatesByDepartment(department, currentValue = null) {
-      if (!department) {
-        templateSelect.innerHTML = "<option value=''>-- департамент не выбран --</option>";
-        return;
-      }
-
-      BX24.callMethod(
-        "crm.item.list",
-        {
-          entityTypeId: 34, // смарт-процесс "Шаблоны"
-          filter: { "ufCrm34UfDepartment": department },
-          select: ["id", "ufCrm35UfTemplate"]
-        },
-        function(result) {
-          if (result.error()) {
-            console.error("Ошибка:", result.error());
-            return;
-          }
-
-          let templates = result.data();
-          templateSelect.innerHTML = "";
-
-          if (templates.length === 0) {
-            templateSelect.innerHTML = "<option value=''>-- нет шаблонов для департамента --</option>";
-            return;
-          }
-
-          templates.forEach(t => {
-            let option = document.createElement("option");
-            option.value = t.ufCrm35UfTemplate;
-            option.textContent = t.ufCrm35UfTemplate;
-            if (currentValue && currentValue === option.value) {
-              option.selected = true;
-            }
-            templateSelect.appendChild(option);
-          });
-
-          console.log("Подгруженные шаблоны:", templates);
-        }
-      );
-    }
-
-    // 🔹 обработчик выбора шаблона — сохраняем в поле заявки
-    templateSelect.addEventListener("change", function() {
-      let value = this.value;
-      if (value) {
-        BX24.placement.call("setFieldValue", {
-          field: "UF_CRM_33_UF_TEMPLATE",
-          value: value
-        });
-        console.log("Выбран шаблон:", value);
-      }
-    });
-
-    // 🔹 получаем текущие значения карточки при открытии
-    BX24.placement.call("getCardFields", {}, function(result) {
-      if (result && result.data) {
-        let department = result.data["UF_CRM_33_UF_DEPARTMENT"];
-        let currentTemplate = result.data["UF_CRM_33_UF_TEMPLATE"];
-        console.log("Карточка открыта. Департамент:", department, "Текущий шаблон:", currentTemplate);
-        loadTemplatesByDepartment(department, currentTemplate);
-      }
-    });
-
-    // 🔹 слушаем изменения карточки (например, департамент меняется)
-    BX24.placement.call("addEventListener", {
-      event: "onCrmEntityUpdate",
-      handler: function(eventData) {
-        let department = eventData.currentValues["UF_CRM_33_UF_DEPARTMENT"];
-        console.log("Выбран департамент:", department);
-        loadTemplatesByDepartment(department);
-      }
-    });
-  });
-</script>
+  <label for="template">Шаблон:</label>
+  <select id="template"></select>
 </body>
 </html>
