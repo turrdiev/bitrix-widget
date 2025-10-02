@@ -1,45 +1,45 @@
-BX.ready(function() {
-    var departmentField = document.querySelector('select[name="UF_CRM_1759346943503"]'); // Департамент
-    var requestTypeField = document.querySelector('select[name="UF_CRM_1759347755474"]'); // Тип заявки
+console.log("Custom script for Bitrix24 loaded...");
 
-    if (!departmentField || !requestTypeField) return;
+(function() {
+    // Подождём, пока карточка сделки полностью загрузится
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("Bitrix24 DOM ready...");
 
-    // Сохраняем все варианты
-    var allOptions = Array.from(requestTypeField.options);
+        // Находим селекты
+        const depSelect = document.querySelector("select[name='UF_CRM_1759346943503']"); // департамент
+        const reqSelect = document.querySelector("select[name='UF_CRM_1759347755474']"); // тип заявки
 
-    // Словарь: ID департамента → префикс
-    var deptMap = {
-        "294": "IT",
-        "295": "HR",
-        "296": "RND"
-    };
+        if (!depSelect || !reqSelect) {
+            console.error("Не найдены селекты!");
+            return;
+        }
 
-    function filterOptions() {
-        var selectedDept = departmentField.value;
-        var prefix = deptMap[selectedDept];
-        var newOptions = [allOptions[0]]; // "не выбрано"
+        // Сохраняем все опции заявок
+        const allOptions = Array.from(reqSelect.options);
 
-        if (prefix) {
-            allOptions.forEach(function(opt) {
-                if (!opt.value) return;
-                var text = opt.textContent.trim();
-                if (text.startsWith(prefix)) {
-                    newOptions.push(opt);
+        function filterRequests() {
+            const dep = depSelect.options[depSelect.selectedIndex].text.trim();
+            console.log("Выбран департамент:", dep);
+
+            // очищаем заявки
+            reqSelect.innerHTML = "";
+
+            // добавляем "не выбрано"
+            reqSelect.appendChild(new Option("не выбрано", ""));
+
+            // фильтруем по департаменту
+            allOptions.forEach(opt => {
+                if (opt.value === "") return; // пропускаем пустую
+                if (opt.text.startsWith(dep)) {
+                    reqSelect.appendChild(opt.cloneNode(true));
                 }
             });
         }
 
-        // Перерисовываем список
-        requestTypeField.innerHTML = "";
-        newOptions.forEach(function(opt) {
-            requestTypeField.appendChild(opt.cloneNode(true));
-        });
-        requestTypeField.value = "";
-    }
+        // запускаем при выборе департамента
+        depSelect.addEventListener("change", filterRequests);
 
-    // Первичный запуск
-    filterOptions();
-
-    // На смену департамента
-    departmentField.addEventListener('change', filterOptions);
-});
+        // запускаем сразу при загрузке (если уже выбран департамент)
+        filterRequests();
+    });
+})();
