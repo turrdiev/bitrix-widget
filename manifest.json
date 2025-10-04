@@ -1,0 +1,13 @@
+{
+  "code": "dependent_lists_app",
+  "name": "Зависимые списки CRM",
+  "description": "Подгрузка шаблонов заявок по выбранному департаменту",
+  "version": "1.0.0",
+  "type": "crm",
+  "placement": {
+    "CRM_DEAL_DETAIL_TAB": {
+      "title": "Зависимые списки",
+      "handler": "https://USERNAME.github.io/REPO/handler.js"
+    }
+  }
+}
