@@ -7,7 +7,7 @@
   "placement": {
     "CRM_DEAL_DETAIL_TAB": {
       "title": "Зависимые списки",
-      "handler": "https://USERNAME.github.io/REPO/handler.js"
+      "handler": "https://turrdiev.github.io/bitrix-widget/handler.js"
     }
   }
 }
