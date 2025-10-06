@@ -11,16 +11,6 @@
             width: 100%; padding: 8px; border: 1px solid #ddd;
             border-radius: 4px; box-sizing: border-box;
         }
-        button {
-            margin-top: 15px;
-            background: #2fc6f6;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #1fa8d6;
-        }
     </style>
 </head>
 <body>
@@ -48,7 +38,7 @@
     <script>
         let currentDealId = null;
 
-        // Справочник шаблонов по департаментам
+        // Заранее зашиваем список шаблонов по департаментам
         const templatesByDept = {
             "IT": ["Сброс пароля", "Не работает ПК", "Заявка на доступ"],
             "HR": ["Отпуск", "Командировка", "Больничный"],
@@ -61,7 +51,7 @@
                 currentDealId = placement.options.ID;
                 loadDealData(currentDealId);
             }
-            BX24.resizeWindow(500, 300);
+            BX24.resizeWindow(600, 400);
         });
 
         // Обновляем второй список при выборе департамента
@@ -84,7 +74,7 @@
             }
         }
 
-        // Загружаем сохранённые значения из сделки
+        // Загружаем данные из сделки
         function loadDealData(dealId) {
             BX24.callMethod("crm.deal.get", { id: dealId }, function(result) {
                 if (!result.error()) {
