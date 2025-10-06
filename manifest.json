@@ -1,22 +1,19 @@
 {
   "manifest_version": 2,
-  "version": "1.0.0",
+  "code": "dependent_widget",
   "name": {
-    "ru": "Зависимые списки",
-    "en": "Dependent Fields"
+    "ru": "Зависимый список заявок"
   },
   "description": {
-    "ru": "Вкладка с зависимыми списками (департамент и шаблоны заявок)",
-    "en": "Deal tab with dependent dropdowns (department -> templates)"
+    "ru": "Показывает типы заявок в зависимости от выбранного департамента"
   },
-  "handler": "https://turrdiev.github.io/bitrix-widget/",
+  "version": "1.0.0",
   "placement": {
-    "CRM_DEAL_DETAIL_TAB": {
-      "handler": "https://turrdiev.github.io/bitrix-widget/deal_tab.html",
-      "title": {
-        "ru": "Зависимые списки",
-        "en": "Dependent Fields"
-      }
+    "CRM_DEAL_DETAIL_ACTIVITY": {
+      "handler": "https://your-domain.com/widget/index.html",
+      "title": "Типы заявок"
     }
-  }
+  },
+  "auth": "Y",
+  "scope": ["crm"]
 }
