@@ -1,19 +1,19 @@
 {
   "manifest_version": 2,
-  "code": "dependent_widget",
+  "version": "1.0.0",
   "name": {
-    "ru": "Зависимый список заявок"
+    "ru": "Связанный список СД 2"
   },
   "description": {
-    "ru": "Показывает типы заявок в зависимости от выбранного департамента"
+    "ru": "Показывает типы заявок по выбранному департаменту"
   },
-  "version": "1.0.0",
   "placement": {
-    "CRM_DEAL_DETAIL_ACTIVITY": {
-      "handler": "https://your-domain.com/widget/index.html",
-      "title": "Типы заявок"
+    "CRM_DEAL_DETAIL_TAB": {
+      "handler": "https://turrdiev.github.io/bitrix-widget/index.html",
+      "title": "Типы заявок по департаменту"
     }
   },
-  "auth": "Y",
-  "scope": ["crm"]
+  "rights": {
+    "placement": "W"
+  }
 }
