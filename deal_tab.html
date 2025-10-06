@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="//api.bitrix24.com/api/v1/"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .field-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, button {
+            width: 100%; padding: 8px; border: 1px solid #ddd;
+            border-radius: 4px; box-sizing: border-box;
+        }
+        button {
+            margin-top: 15px;
+            background: #2fc6f6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1fa8d6;
+        }
+    </style>
+</head>
+<body>
+    <h2>Зависимые списки</h2>
+
+    <div class="field-group">
+        <label>Департамент</label>
+        <select id="department" onchange="updateTemplates()">
+            <option value="">-- выберите --</option>
+            <option value="IT">IT</option>
+            <option value="HR">HR</option>
+            <option value="Marketing">Маркетинг</option>
+        </select>
+    </div>
+
+    <div class="field-group">
+        <label>Шаблоны заявок</label>
+        <select id="templates">
+            <option value="">-- выберите департамент --</option>
+        </select>
+    </div>
+
+    <button onclick="saveFields()">Сохранить в сделку</button>
+
+    <script>
+        let currentDealId = null;
+
+        // Справочник шаблонов по департаментам
+        const templatesByDept = {
+            "IT": ["Сброс пароля", "Не работает ПК", "Заявка на доступ"],
+            "HR": ["Отпуск", "Командировка", "Больничный"],
+            "Marketing": ["Рекламная кампания", "Дизайн", "Копирайтинг"]
+        };
+
+        BX24.init(function() {
+            const placement = BX24.placement.info();
+            if (placement && placement.options) {
+                currentDealId = placement.options.ID;
+                loadDealData(currentDealId);
+            }
+            BX24.resizeWindow(500, 300);
+        });
+
+        // Обновляем второй список при выборе департамента
+        function updateTemplates() {
+            const dept = document.getElementById('department').value;
+            const templateSelect = document.getElementById('templates');
+            templateSelect.innerHTML = "";
+
+            if (dept && templatesByDept[dept]) {
+                templatesByDept[dept].forEach(t => {
+                    const opt = document.createElement("option");
+                    opt.value = t;
+                    opt.text = t;
+                    templateSelect.add(opt);
+                });
+            } else {
+                const opt = document.createElement("option");
+                opt.text = "-- выберите департамент --";
+                templateSelect.add(opt);
+            }
+        }
+
+        // Загружаем сохранённые значения из сделки
+        function loadDealData(dealId) {
+            BX24.callMethod("crm.deal.get", { id: dealId }, function(result) {
+                if (!result.error()) {
+                    const deal = result.data();
+                    if (deal.UF_DEPARTMENT) {
+                        document.getElementById('department').value = deal.UF_DEPARTMENT;
+                        updateTemplates();
+                    }
+                    if (deal.UF_TEMPLATE) {
+                        document.getElementById('templates').value = deal.UF_TEMPLATE;
+                    }
+                }
+            });
+        }
+
+        // Сохраняем выбранные значения в сделку
+        function saveFields() {
+            const dept = document.getElementById('department').value;
+            const template = document.getElementById('templates').value;
+
+            BX24.callMethod(
+                "crm.deal.update",
+                {
+                    id: currentDealId,
+                    fields: {
+                        "UF_DEPARTMENT": dept,
+                        "UF_TEMPLATE": template
+                    }
+                },
+                function(result) {
+                    if (result.error()) {
+                        alert("Ошибка: " + result.error());
+                    } else {
+                        alert("Сохранено!");
+                        BX24.reloadWindow();
+                    }
+                }
+            );
+        }
+    </script>
+</body>
+</html>
