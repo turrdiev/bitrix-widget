@@ -1,119 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <script src="//api.bitrix24.com/api/v1/"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .field-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, button {
-            width: 100%; padding: 8px; border: 1px solid #ddd;
-            border-radius: 4px; box-sizing: border-box;
-        }
-    </style>
-</head>
-<body>
-    <h2>Зависимые списки</h2>
+BX.ready(function() {
+  const deps = {
+    "338": [ // IT
+      {id: "it_1", text: "Сброс пароля"},
+      {id: "it_2", text: "Не работает ПК"},
+      {id: "it_3", text: "Доступ к системе"}
+    ],
+    "339": [ // HR
+      {id: "hr_1", text: "Заявка на отпуск"},
+      {id: "hr_2", text: "Командировка"},
+      {id: "hr_3", text: "Новый сотрудник"}
+    ],
+    "340": [ // Маркетинг
+      {id: "m_1", text: "Запуск кампании"},
+      {id: "m_2", text: "Бриф на дизайн"},
+      {id: "m_3", text: "Реклама"}
+    ]
+  };
 
-    <div class="field-group">
-        <label>Департамент</label>
-        <select id="department" onchange="updateTemplates()">
-            <option value="">-- выберите --</option>
-            <option value="IT">IT</option>
-            <option value="HR">HR</option>
-            <option value="Marketing">Маркетинг</option>
-        </select>
-    </div>
+  const depField = document.querySelector('select[name="UF_CRM_1759607241"]');
+  const tplField = document.querySelector('select[name="UF_CRM_1759607274"]');
 
-    <div class="field-group">
-        <label>Шаблоны заявок</label>
-        <select id="templates">
-            <option value="">-- выберите департамент --</option>
-        </select>
-    </div>
+  if (depField && tplField) {
+    depField.addEventListener("change", function() {
+      const depVal = this.value;
+      tplField.innerHTML = '<option value="">не выбрано</option>'; // очистка
 
-    <button onclick="saveFields()">Сохранить в сделку</button>
-
-    <script>
-        let currentDealId = null;
-
-        // Заранее зашиваем список шаблонов по департаментам
-        const templatesByDept = {
-            "IT": ["Сброс пароля", "Не работает ПК", "Заявка на доступ"],
-            "HR": ["Отпуск", "Командировка", "Больничный"],
-            "Marketing": ["Рекламная кампания", "Дизайн", "Копирайтинг"]
-        };
-
-        BX24.init(function() {
-            const placement = BX24.placement.info();
-            if (placement && placement.options) {
-                currentDealId = placement.options.ID;
-                loadDealData(currentDealId);
-            }
-            BX24.resizeWindow(600, 400);
+      if (deps[depVal]) {
+        deps[depVal].forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.text;
+          tplField.appendChild(opt);
         });
-
-        // Обновляем второй список при выборе департамента
-        function updateTemplates() {
-            const dept = document.getElementById('department').value;
-            const templateSelect = document.getElementById('templates');
-            templateSelect.innerHTML = "";
-
-            if (dept && templatesByDept[dept]) {
-                templatesByDept[dept].forEach(t => {
-                    const opt = document.createElement("option");
-                    opt.value = t;
-                    opt.text = t;
-                    templateSelect.add(opt);
-                });
-            } else {
-                const opt = document.createElement("option");
-                opt.text = "-- выберите департамент --";
-                templateSelect.add(opt);
-            }
-        }
-
-        // Загружаем данные из сделки
-        function loadDealData(dealId) {
-            BX24.callMethod("crm.deal.get", { id: dealId }, function(result) {
-                if (!result.error()) {
-                    const deal = result.data();
-                    if (deal.UF_DEPARTMENT) {
-                        document.getElementById('department').value = deal.UF_DEPARTMENT;
-                        updateTemplates();
-                    }
-                    if (deal.UF_TEMPLATE) {
-                        document.getElementById('templates').value = deal.UF_TEMPLATE;
-                    }
-                }
-            });
-        }
-
-        // Сохраняем выбранные значения в сделку
-        function saveFields() {
-            const dept = document.getElementById('department').value;
-            const template = document.getElementById('templates').value;
-
-            BX24.callMethod(
-                "crm.deal.update",
-                {
-                    id: currentDealId,
-                    fields: {
-                        "UF_DEPARTMENT": dept,
-                        "UF_TEMPLATE": template
-                    }
-                },
-                function(result) {
-                    if (result.error()) {
-                        alert("Ошибка: " + result.error());
-                    } else {
-                        alert("Сохранено!");
-                        BX24.reloadWindow();
-                    }
-                }
-            );
-        }
-    </script>
-</body>
-</html>
+      }
+    });
+  }
+});
