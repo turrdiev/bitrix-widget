@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Зависимые поля</title>
+  <script src="https://api.bitrix24.com/api/v1/"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      padding: 15px;
+    }
+    select {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <label for="department">Департамент</label>
+  <select id="department">
+    <option value="">Выберите департамент</option>
+    <option value="it">IT</option>
+    <option value="hr">HR</option>
+    <option value="marketing">Маркетинг</option>
+  </select>
+
+  <label for="requestType">Тип заявки</label>
+  <select id="requestType">
+    <option value="">Сначала выберите департамент</option>
+  </select>
+
+  <script>
+    // Список типов заявок по департаментам
+    const templates = {
+      it: ["Доступ к VPN", "Выдача техники", "Настройка Outlook"],
+      hr: ["Отпуск", "Больничный", "Командировка"],
+      marketing: ["Бриф", "Рекламная кампания", "Макет"]
+    };
+
+    const depSelect = document.getElementById('department');
+    const reqSelect = document.getElementById('requestType');
+
+    depSelect.addEventListener('change', () => {
+      const dep = depSelect.value;
+      reqSelect.innerHTML = '';
+
+      if (!dep) {
+        reqSelect.innerHTML = '<option>Сначала выберите департамент</option>';
+        return;
+      }
+
+      templates[dep].forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        reqSelect.appendChild(opt);
+      });
+    });
+
+    // Если нужно сохранять выбор в сделке
+    BX24.ready(() => {
+      reqSelect.addEventListener('change', () => {
+        const dealId = BX24.placement.info().options.ID;
+        BX24.callMethod(
+          'crm.deal.update',
+          { id: dealId, fields: { UF_CRM_TYPE: reqSelect.value } }, // замените на своё поле
+          (res) => console.log('Сохранено:', res)
+        );
+      });
+    });
+  </script>
+</body>
+</html>
